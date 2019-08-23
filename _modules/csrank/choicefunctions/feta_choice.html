@@ -1,0 +1,489 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>csrank.choicefunctions.feta_choice &mdash; csrank 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        <script type="text/x-mathjax-config">MathJax.Hub.Config({"tex2jax": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true, "ignoreClass": "document", "processClass": "math|output_area"}})</script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> csrank
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                1.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">csrank</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>csrank.choicefunctions.feta_choice</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for csrank.choicefunctions.feta_choice</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">combinations</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="k">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span><span class="p">,</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">concatenate</span><span class="p">,</span> <span class="n">Lambda</span><span class="p">,</span> <span class="n">add</span><span class="p">,</span> <span class="n">Activation</span>
+<span class="kn">from</span> <span class="nn">keras.losses</span> <span class="k">import</span> <span class="n">binary_crossentropy</span>
+<span class="kn">from</span> <span class="nn">keras.optimizers</span> <span class="k">import</span> <span class="n">SGD</span>
+<span class="kn">from</span> <span class="nn">keras.regularizers</span> <span class="k">import</span> <span class="n">l2</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="k">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">from</span> <span class="nn">csrank.core.feta_network</span> <span class="k">import</span> <span class="n">FETANetwork</span>
+<span class="kn">from</span> <span class="nn">csrank.layers</span> <span class="k">import</span> <span class="n">NormalizedDense</span>
+<span class="kn">from</span> <span class="nn">.choice_functions</span> <span class="k">import</span> <span class="n">ChoiceFunctions</span>
+
+
+<div class="viewcode-block" id="FETAChoiceFunction"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction">[docs]</a><span class="k">class</span> <span class="nc">FETAChoiceFunction</span><span class="p">(</span><span class="n">FETANetwork</span><span class="p">,</span> <span class="n">ChoiceFunctions</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_objects</span><span class="p">,</span> <span class="n">n_object_features</span><span class="p">,</span> <span class="n">n_hidden</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_units</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">add_zeroth_order_model</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">max_number_of_objects</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_subsample</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">loss_function</span><span class="o">=</span><span class="n">binary_crossentropy</span><span class="p">,</span>
+                 <span class="n">batch_normalization</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">l</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;lecun_normal&#39;</span><span class="p">,</span>
+                 <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;selu&#39;</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">SGD</span><span class="p">(</span><span class="n">lr</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">nesterov</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+                 <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;binary_accuracy&#39;</span><span class="p">],</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Create a FETA-network architecture for learning choice functions.</span>
+<span class="sd">            The first-evaluate-then-aggregate approach approximates the context-dependent utility function using the</span>
+<span class="sd">            first-order utility function :math:`U_1 \colon \mathcal{X} \\times \mathcal{X} \\rightarrow [0,1]`</span>
+<span class="sd">            and zeroth-order utility function  :math:`U_0 \colon \mathcal{X} \\rightarrow [0,1]`.</span>
+<span class="sd">            The scores each object :math:`x` using a context-dependent utility function :math:`U (x, C_i)`:</span>
+
+<span class="sd">            .. math::</span>
+<span class="sd">                 U(x_i, C_i) = U_0(x_i) + \\frac{1}{n-1} \sum_{x_j \in Q \\setminus \{x_i\}} U_1(x_i , x_j) \, .</span>
+
+<span class="sd">            Training and prediction complexity is quadratic in the number of objects.</span>
+<span class="sd">            The choice set is defined as:</span>
+
+<span class="sd">            .. math::</span>
+
+<span class="sd">                c(Q) = \{ x_i \in Q \lvert \, U (x_i, C_i) &gt; t \}</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            n_objects : int</span>
+<span class="sd">                Number of objects in each query set</span>
+<span class="sd">            n_object_features : int</span>
+<span class="sd">                Dimensionality of the feature space of each object</span>
+<span class="sd">            n_hidden : int</span>
+<span class="sd">                Number of hidden layers</span>
+<span class="sd">            n_units : int</span>
+<span class="sd">                Number of hidden units in each layer</span>
+<span class="sd">            add_zeroth_order_model : bool</span>
+<span class="sd">                True if the model should include a latent utility function</span>
+<span class="sd">            max_number_of_objects : int</span>
+<span class="sd">                The maximum number of objects to train from</span>
+<span class="sd">            num_subsample : int</span>
+<span class="sd">                Number of objects to subsample to</span>
+<span class="sd">            loss_function : function</span>
+<span class="sd">                Differentiable loss function for the score vector</span>
+<span class="sd">            batch_normalization : bool</span>
+<span class="sd">                Whether to use batch normalization in the hidden layers</span>
+<span class="sd">            kernel_regularizer : function</span>
+<span class="sd">                Regularizer to use in the hidden units</span>
+<span class="sd">            kernel_initializer : function or string</span>
+<span class="sd">                Initialization function for the weights of each hidden layer</span>
+<span class="sd">            activation : string or function</span>
+<span class="sd">                Activation function to use in the hidden units</span>
+<span class="sd">            optimizer : string or function</span>
+<span class="sd">                Stochastic gradient optimizer</span>
+<span class="sd">            metrics : list</span>
+<span class="sd">                List of evaluation metrics (can be non-differentiable)</span>
+<span class="sd">            batch_size : int</span>
+<span class="sd">                Batch size to use for training</span>
+<span class="sd">            random_state : int or object</span>
+<span class="sd">                Numpy random state</span>
+<span class="sd">            **kwargs</span>
+<span class="sd">                Keyword arguments for the hidden units</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">n_objects</span><span class="o">=</span><span class="n">n_objects</span><span class="p">,</span> <span class="n">n_object_features</span><span class="o">=</span><span class="n">n_object_features</span><span class="p">,</span> <span class="n">n_hidden</span><span class="o">=</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">n_units</span><span class="o">=</span><span class="n">n_units</span><span class="p">,</span>
+                         <span class="n">add_zeroth_order_model</span><span class="o">=</span><span class="n">add_zeroth_order_model</span><span class="p">,</span> <span class="n">max_number_of_objects</span><span class="o">=</span><span class="n">max_number_of_objects</span><span class="p">,</span>
+                         <span class="n">num_subsample</span><span class="o">=</span><span class="n">num_subsample</span><span class="p">,</span> <span class="n">loss_function</span><span class="o">=</span><span class="n">loss_function</span><span class="p">,</span>
+                         <span class="n">batch_normalization</span><span class="o">=</span><span class="n">batch_normalization</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="n">kernel_regularizer</span><span class="p">,</span>
+                         <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span>
+                         <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">FETAChoiceFunction</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_construct_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_layer</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_objects</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_object_features</span><span class="p">))</span>
+        <span class="c1"># Todo: Variable sized input</span>
+        <span class="c1"># X = Input(shape=(None, n_features))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_zeroth_model</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers_zeroth</span> <span class="o">=</span> <span class="p">[</span><span class="n">NormalizedDense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_units</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;hidden_zeroth_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">*</span><span class="n">kwargs</span><span class="p">)</span>
+                                             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span> <span class="o">=</span> <span class="p">[</span><span class="n">NormalizedDense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_units</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;hidden_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                                  <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_zeroth_model</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers_zeroth</span> <span class="o">=</span> <span class="p">[</span><span class="n">Dense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_units</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;hidden_zeroth_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                                             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span> <span class="o">=</span> <span class="p">[</span><span class="n">Dense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_units</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;hidden_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                                  <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span><span class="p">)]</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_hidden</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_node</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_regularizer</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_zeroth_model</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_node_zeroth</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">kernel_regularizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_regularizer</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FETAChoiceFunction.construct_model"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.construct_model">[docs]</a>    <span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Construct the :math:`1`-st order and :math:`0`-th order models, which are used to approximate the</span>
+<span class="sd">            :math:`U_1(x, C(x))` and the :math:`U_0(x)` utilities respectively. For each pair of objects in</span>
+<span class="sd">            :math:`x_i, x_j \in Q` :math:`U_1(x, C(x))` we construct :class:`CmpNetCore` with weight sharing to</span>
+<span class="sd">            approximate a pairwise-matrix. A pairwise matrix with index (i,j) corresponds to the :math:`U_1(x_i,x_j)`</span>
+<span class="sd">            is a measure of how favorable it is to choose :math:`x_i` over :math:`x_j`. Using this matrix we calculate</span>
+<span class="sd">            the borda score for each object to calculate :math:`U_1(x, C(x))`. For `0`-th order model we construct</span>
+<span class="sd">            :math:`\lvert Q \lvert` sequential networks whose weights are shared to evaluate the :math:`U_0(x)` for</span>
+<span class="sd">            each object in the query set :math:`Q`. The output mode is using sigmoid activation.</span>
+
+<span class="sd">            Returns</span>
+<span class="sd">            -------</span>
+<span class="sd">            model: keras :class:`Model`</span>
+<span class="sd">                Neural network to learn the FETA utility score</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">create_input_lambda</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Lambda</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_zeroth_model</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Create 0th order model&#39;</span><span class="p">)</span>
+            <span class="n">zeroth_order_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_objects</span><span class="p">):</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">create_input_lambda</span><span class="p">(</span><span class="n">i</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_layer</span><span class="p">)</span>
+                <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">hidden</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers_zeroth</span><span class="p">:</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="n">hidden</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                <span class="n">zeroth_order_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_node_zeroth</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="n">zeroth_order_scores</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">(</span><span class="n">zeroth_order_outputs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;0th order model finished&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Create 1st order model&#39;</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_objects</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_objects</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_zeroth_model</span><span class="p">:</span>
+                <span class="n">x1</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">x2</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">x1</span> <span class="o">=</span> <span class="n">create_input_lambda</span><span class="p">(</span><span class="n">i</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_layer</span><span class="p">)</span>
+                <span class="n">x2</span> <span class="o">=</span> <span class="n">create_input_lambda</span><span class="p">(</span><span class="n">j</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_layer</span><span class="p">)</span>
+            <span class="n">x1x2</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">])</span>
+            <span class="n">x2x1</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">x2</span><span class="p">,</span> <span class="n">x1</span><span class="p">])</span>
+
+            <span class="k">for</span> <span class="n">hidden</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span><span class="p">:</span>
+                <span class="n">x1x2</span> <span class="o">=</span> <span class="n">hidden</span><span class="p">(</span><span class="n">x1x2</span><span class="p">)</span>
+                <span class="n">x2x1</span> <span class="o">=</span> <span class="n">hidden</span><span class="p">(</span><span class="n">x2x1</span><span class="p">)</span>
+
+            <span class="n">merged_left</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">x1x2</span><span class="p">,</span> <span class="n">x2x1</span><span class="p">])</span>
+            <span class="n">merged_right</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">([</span><span class="n">x2x1</span><span class="p">,</span> <span class="n">x1x2</span><span class="p">])</span>
+
+            <span class="n">N_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_node</span><span class="p">(</span><span class="n">merged_left</span><span class="p">)</span>
+            <span class="n">N_l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_node</span><span class="p">(</span><span class="n">merged_right</span><span class="p">)</span>
+
+            <span class="n">outputs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">N_g</span><span class="p">)</span>
+            <span class="n">outputs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">N_l</span><span class="p">)</span>
+        <span class="c1"># convert rows of pairwise matrix to keras layers:</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">concatenate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">]</span>
+        <span class="c1"># compute utility scores:</span>
+        <span class="n">sum_fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">K</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">Lambda</span><span class="p">(</span><span class="n">sum_fun</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">]</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">concatenate</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;1st order model finished&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_zeroth_model</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">add</span><span class="p">([</span><span class="n">scores</span><span class="p">,</span> <span class="n">zeroth_order_scores</span><span class="p">])</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">)(</span><span class="n">scores</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="n">scores</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Compiling complete model...&#39;</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_function</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span></div>
+
+<div class="viewcode-block" id="FETAChoiceFunction.fit"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">tune_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">thin_thresholds</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwd</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Fit a FETA-Network for learning a choice function on the provided set of queries X and preferences Y of</span>
+<span class="sd">            those objects. The provided queries and corresponding preferences are of a fixed size (numpy arrays).</span>
+
+<span class="sd">            Parameters</span>
+<span class="sd">            ----------</span>
+<span class="sd">            X : numpy array (n_instances, n_objects, n_features)</span>
+<span class="sd">                Feature vectors of the objects</span>
+<span class="sd">            Y : numpy array (n_instances, n_objects)</span>
+<span class="sd">                Choices for given objects in the query</span>
+<span class="sd">            epochs : int</span>
+<span class="sd">                Number of epochs to run if training for a fixed query size</span>
+<span class="sd">            callbacks : list</span>
+<span class="sd">                List of callbacks to be called during optimization</span>
+<span class="sd">            validation_split : float (range : [0,1])</span>
+<span class="sd">                Percentage of instances to split off to validate on</span>
+<span class="sd">            verbose : bool</span>
+<span class="sd">                Print verbose information</span>
+<span class="sd">            tune_size: float (range : [0,1])</span>
+<span class="sd">                Percentage of instances to split off to tune the threshold for the choice function</span>
+<span class="sd">            thin_thresholds: int</span>
+<span class="sd">                The number of instances of scores to skip while tuning the threshold</span>
+<span class="sd">            **kwd :</span>
+<span class="sd">                Keyword arguments for the fit function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tune_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">X_train</span><span class="p">,</span> <span class="n">X_val</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">Y_val</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">tune_size</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">,</span>
+                            <span class="n">validation_split</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="o">**</span><span class="n">kwd</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Fitting utility function finished. Start tuning threshold.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tune_threshold</span><span class="p">(</span><span class="n">X_val</span><span class="p">,</span> <span class="n">Y_val</span><span class="p">,</span> <span class="n">thin_thresholds</span><span class="o">=</span><span class="n">thin_thresholds</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">callbacks</span><span class="p">,</span> <span class="n">validation_split</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwd</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">threshold</span> <span class="o">=</span> <span class="mf">0.5</span></div>
+
+<div class="viewcode-block" id="FETAChoiceFunction.sub_sampling"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.sub_sampling">[docs]</a>    <span class="k">def</span> <span class="nf">sub_sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_objects</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_objects</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span>
+        <span class="n">n_objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_number_of_objects</span>
+        <span class="n">bucket_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">n_objects</span><span class="p">)</span>
+        <span class="n">X_train</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">Y_train</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+            <span class="n">ind_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">p_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind_1</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind_1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">n_objects</span><span class="p">:</span>
+                <span class="n">ind_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">p_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind_0</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind_0</span><span class="p">)</span>
+                <span class="n">positives</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="k">if</span> <span class="n">n_objects</span> <span class="o">&gt;</span> <span class="p">(</span>
+                        <span class="n">y</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="k">else</span> <span class="n">n_objects</span>
+                <span class="k">if</span> <span class="n">positives</span> <span class="o">&gt;</span> <span class="n">bucket_size</span><span class="p">:</span>
+                    <span class="n">cp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">positives</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">bucket_size</span><span class="p">,</span>
+                                                  <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">cp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">positives</span><span class="p">,</span>
+                                                  <span class="n">size</span><span class="o">=</span><span class="n">bucket_size</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cp</span><span class="p">:</span>
+                    <span class="n">pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind_1</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">c</span><span class="p">,</span>
+                                                   <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p_1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">n_objects</span> <span class="o">-</span> <span class="n">c</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">ind_0</span><span class="p">):</span>
+                        <span class="n">neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind_0</span><span class="p">),</span>
+                                                       <span class="n">size</span><span class="o">=</span><span class="n">n_objects</span> <span class="o">-</span> <span class="n">c</span><span class="p">,</span>
+                                                       <span class="n">p</span><span class="o">=</span><span class="n">p_0</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ind_0</span><span class="p">),</span>
+                                                       <span class="n">size</span><span class="o">=</span><span class="n">n_objects</span> <span class="o">-</span> <span class="n">c</span><span class="p">,</span>
+                                                       <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">p_0</span><span class="p">)</span>
+                    <span class="n">p_0</span><span class="p">[</span><span class="n">neg</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">p_0</span><span class="p">[</span><span class="n">neg</span><span class="p">]</span>
+                    <span class="n">p_0</span> <span class="o">=</span> <span class="n">p_0</span> <span class="o">/</span> <span class="n">p_0</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">ind_1</span><span class="p">[</span><span class="n">pos</span><span class="p">],</span> <span class="n">ind_0</span><span class="p">[</span><span class="n">neg</span><span class="p">]))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    <span class="n">p_1</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">p_1</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+                    <span class="n">p_1</span> <span class="o">=</span> <span class="n">p_1</span> <span class="o">/</span> <span class="n">p_1</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">p_0</span><span class="p">[</span><span class="n">neg</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">p_0</span><span class="p">[</span><span class="n">neg</span><span class="p">]</span>
+                    <span class="n">p_0</span> <span class="o">=</span> <span class="n">p_0</span> <span class="o">/</span> <span class="n">p_0</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                    <span class="n">idx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">ind_1</span><span class="p">,</span>
+                                               <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">bucket_size</span><span class="p">,</span> <span class="n">n_objects</span><span class="p">))</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">X_train</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">Y_train</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">Y_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">Y_train</span><span class="p">,</span> <span class="n">y</span><span class="p">[</span><span class="n">idx</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">X_train</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="n">idx</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sampled instances </span><span class="si">{}</span><span class="s2"> objects </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">Y_train</span></div>
+
+    <span class="k">def</span> <span class="nf">_predict_scores_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_predict_scores_fixed</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FETAChoiceFunction.predict_scores"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.predict_scores">[docs]</a>    <span class="k">def</span> <span class="nf">predict_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict_scores</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FETAChoiceFunction.predict_for_scores"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.predict_for_scores">[docs]</a>    <span class="k">def</span> <span class="nf">predict_for_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ChoiceFunctions</span><span class="o">.</span><span class="n">predict_for_scores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FETAChoiceFunction.predict"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FETAChoiceFunction.clear_memory"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.clear_memory">[docs]</a>    <span class="k">def</span> <span class="nf">clear_memory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Clearing memory&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clear_memory</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FETAChoiceFunction.set_tunable_parameters"><a class="viewcode-back" href="../../../api/choicefunction.html#csrank.choicefunctions.FETAChoiceFunction.set_tunable_parameters">[docs]</a>    <span class="k">def</span> <span class="nf">set_tunable_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_hidden</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">n_units</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">reg_strength</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                               <span class="o">**</span><span class="n">point</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_tunable_parameters</span><span class="p">(</span><span class="n">n_hidden</span><span class="o">=</span><span class="n">n_hidden</span><span class="p">,</span> <span class="n">n_units</span><span class="o">=</span><span class="n">n_units</span><span class="p">,</span> <span class="n">reg_strength</span><span class="o">=</span><span class="n">reg_strength</span><span class="p">,</span>
+                                       <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">point</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Karlson Pfannschmidt, Pritha Gupta, Eyke Hüllermeier
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
